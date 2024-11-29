@@ -1,39 +1,46 @@
 <?php
 
+use App\Models\Recipe;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\RecipeController;
+use App\Http\Controllers\Auth\AuthController;
+use Illuminate\Support\Facades\Auth;
 
-Route::resource('categories', CategoryController::class);
+
+Route::resource('category', CategoryController::class);
 Route::resource('recipes', RecipeController::class);
+Route::get('/recipes/{id}', [RecipeController::class, 'showRecipe']);
+Route::get('/show/{id}', [RecipeController::class, 'show']);
 
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
-
-Route::get('/', function () {
-    return view('welcome');
+Route::prefix('auth')->name('auth.')->group(function () {
+    Route::get('login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [AuthController::class, 'login'])->name('login.submit');
+    Route::get('register', [AuthController::class, 'showRegistrationForm'])->name('register');
+    Route::post('register', [AuthController::class, 'register'])->name('register.submit');
+    Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 });
 
-Route::get('recipe', [RecipeController::class, 'index']);
+Route::redirect('/login', '/auth/login');
+Route::redirect('/register', '/auth/register');
+Route::post('/logout', function () {
+    Auth::logout();
+    return redirect()->route('auth.login');
+})->name('logout');
 
-Route::get('recipe', [RecipeController::class, 'create']);
-Route::post('/recipes', [RecipeController::class, 'store'])->name('recipes.store');
-Route::get('/recipes/{id}', [RecipeController::class, 'edit'])->name('recipes.edit');
-Route::put('/recipes/{id}', [RecipeController::class, 'update'])->name('recipes.update');
-Route::get('/recipes/{id}/edit', [RecipeController::class, 'edit'])->name('recipes.edit');
-Route::put('/recipes/{id}', [RecipeController::class, 'update'])->name('recipes.update');
-Route::delete('/recipes/{id}', [RecipeController::class, 'destroy'])->name('recipes.destroy');
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Route::get('/', function () {
+    return view('/');
+})->name('home');
 
-Route::get('/categories/create', [CategoryController::class, 'create'])->name('categories.create');
-Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+Route::get('/about', function () {
+    return view('about');
+});
+
+Route::get('/', function () {
+    $recipes = Recipe::all();
+    $user = Auth::user();  // Get logged-in user
+    return view('welcome', compact('recipes', 'user')); // Pass user along with recipes
+});
+
 
